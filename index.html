@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>연차 계산기</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --ink: #1a1f1c;
+  --paper: #f5f2e9;
+  --moss: #2d5a3d;
+  --moss-light: #4a8060;
+  --gold: #c9a24b;
+  --gold-soft: #e0c478;
+  --line: #d8d3c4;
+  --muted: #6b6658;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  background: var(--paper);
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(45,90,61,0.04) 0%, transparent 40%),
+    radial-gradient(circle at 85% 80%, rgba(201,162,75,0.05) 0%, transparent 40%);
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  line-height: 1.6;
+}
+
+.card {
+  width: 100%;
+  max-width: 540px;
+  background: #fdfbf5;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.02), 0 24px 60px -20px rgba(45,90,61,0.18);
+  overflow: hidden;
+}
+
+.header {
+  background: var(--moss);
+  color: #f5f2e9;
+  padding: 36px 40px 30px;
+  position: relative;
+  overflow: hidden;
+}
+.header::after {
+  content: "";
+  position: absolute;
+  right: -40px; top: -40px;
+  width: 160px; height: 160px;
+  border: 1px solid rgba(224,196,120,0.25);
+  border-radius: 50%;
+}
+.header::before {
+  content: "";
+  position: absolute;
+  right: -10px; top: -10px;
+  width: 100px; height: 100px;
+  border: 1px solid rgba(224,196,120,0.2);
+  border-radius: 50%;
+}
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 4px;
+  color: var(--gold-soft);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+h1 {
+  font-family: 'Gowun Batang', serif;
+  font-size: 30px;
+  font-weight: 700;
+  margin-top: 6px;
+  letter-spacing: -0.5px;
+}
+.sub {
+  font-size: 13px;
+  color: rgba(245,242,233,0.7);
+  margin-top: 8px;
+}
+
+.body { padding: 34px 40px 40px; }
+
+.field { margin-bottom: 22px; }
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--moss);
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+input[type="date"] {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  font-size: 15px;
+  font-family: inherit;
+  background: #fffefb;
+  color: var(--ink);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+input[type="date"]:focus {
+  outline: none;
+  border-color: var(--moss-light);
+  box-shadow: 0 0 0 3px rgba(74,128,96,0.12);
+}
+
+.btn {
+  width: 100%;
+  padding: 15px;
+  background: var(--ink);
+  color: var(--gold-soft);
+  border: none;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  margin-top: 6px;
+}
+.btn:hover { background: #2a2f2b; }
+.btn:active { transform: translateY(1px); }
+
+.result {
+  margin-top: 30px;
+  padding-top: 28px;
+  border-top: 1px dashed var(--line);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s, transform 0.4s;
+}
+.result.show { opacity: 1; transform: translateY(0); }
+
+.headline {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.headline .num {
+  font-family: 'Gowun Batang', serif;
+  font-size: 56px;
+  font-weight: 700;
+  color: var(--moss);
+  line-height: 1;
+}
+.headline .unit { font-size: 22px; color: var(--gold); margin-left: 4px; }
+.headline .desc { font-size: 13px; color: var(--muted); margin-top: 8px; }
+
+.detail {
+  background: #f8f6ee;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 4px 18px;
+}
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(216,211,196,0.6);
+  font-size: 14px;
+}
+.row:last-child { border-bottom: none; }
+.row .k { color: var(--muted); }
+.row .v { font-weight: 600; color: var(--ink); }
+
+.note {
+  margin-top: 18px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.7;
+  padding: 14px 16px;
+  background: rgba(201,162,75,0.07);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 3px 3px 0;
+}
+.note b { color: var(--moss); }
+.error {
+  color: #a23b2d;
+  font-size: 13px;
+  text-align: center;
+  margin-top: 16px;
+}
+
+.banner {
+  margin: 0 40px 36px;
+  background: linear-gradient(135deg, var(--ink) 0%, #233029 100%);
+  border-radius: 4px;
+  padding: 24px 26px;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  display: block;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 12px 30px -14px rgba(26,31,28,0.5);
+}
+.banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px -14px rgba(26,31,28,0.6);
+}
+.banner::after {
+  content: "";
+  position: absolute;
+  right: -30px; bottom: -50px;
+  width: 150px; height: 150px;
+  background: radial-gradient(circle, rgba(201,162,75,0.18) 0%, transparent 70%);
+}
+.banner-tag {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--gold-soft);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.banner-title {
+  font-family: 'Gowun Batang', serif;
+  font-size: 21px;
+  font-weight: 700;
+  color: #f5f2e9;
+  margin-top: 7px;
+  letter-spacing: -0.3px;
+}
+.banner-desc {
+  font-size: 13px;
+  color: rgba(245,242,233,0.72);
+  margin-top: 6px;
+  line-height: 1.55;
+}
+.banner-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--gold-soft);
+  padding: 9px 18px;
+  border-radius: 30px;
+  position: relative;
+  z-index: 1;
+  transition: background 0.2s;
+}
+.banner:hover .banner-cta { background: #ecd496; }
+.banner-cta .arrow { transition: transform 0.2s; }
+.banner:hover .banner-cta .arrow { transform: translateX(3px); }
+.banner-feats {
+  display: flex;
+  gap: 16px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.banner-feats span {
+  font-size: 12px;
+  color: rgba(224,196,120,0.85);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="eyebrow">Annual Leave</div>
+    <h1>연차 계산기</h1>
+    <div class="sub">근로기준법 기준 · 입사일로 산정하는 연차휴가 일수</div>
+  </div>
+  <div class="body">
+    <div class="field">
+      <label for="joinDate">입사일</label>
+      <input type="date" id="joinDate">
+    </div>
+    <div class="field">
+      <label for="baseDate">기준일 (조회 시점)</label>
+      <input type="date" id="baseDate">
+    </div>
+    <button class="btn" onclick="calc()">연차 계산하기</button>
+    <div id="result" class="result"></div>
+  </div>
+
+  <a class="banner" href="https://alba-calculator-production.up.railway.app" target="_blank" rel="noopener">
+    <div class="banner-tag">Perfect 근태관리</div>
+    <div class="banner-title">연차 계산, 매번 직접 하지 마세요</div>
+    <div class="banner-desc">출퇴근·연차·급여까지 자동으로. 사장님 혼자서도 충분한 근태관리 솔루션.</div>
+    <div class="banner-feats">
+      <span>✓ 연차 자동 산정</span>
+      <span>✓ 출퇴근 기록</span>
+      <span>✓ 급여 자동 정산</span>
+    </div>
+    <span class="banner-cta">무료로 시작하기 <span class="arrow">→</span></span>
+  </a>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+$('baseDate').valueAsDate = new Date();
+
+function calc() {
+  const join = $('joinDate').value;
+  const base = $('baseDate').value;
+  const box = $('result');
+
+  if (!join || !base) {
+    box.className = 'result show';
+    box.innerHTML = '<div class="error">입사일과 기준일을 모두 입력해 주세요.</div>';
+    return;
+  }
+
+  const j = new Date(join);
+  const b = new Date(base);
+  if (b < j) {
+    box.className = 'result show';
+    box.innerHTML = '<div class="error">기준일이 입사일보다 빠를 수 없습니다.</div>';
+    return;
+  }
+
+  // 근속일수 / 근속개월 / 근속연수 계산
+  const msDay = 1000 * 60 * 60 * 24;
+  const totalDays = Math.floor((b - j) / msDay);
+
+  // 만 근속연수
+  let years = b.getFullYear() - j.getFullYear();
+  const anniv = new Date(j.getFullYear() + years, j.getMonth(), j.getDate());
+  if (anniv > b) years--;
+
+  // 만 근속개월 (1년 미만 구간용)
+  let months = (b.getFullYear() - j.getFullYear()) * 12 + (b.getMonth() - j.getMonth());
+  if (b.getDate() < j.getDate()) months--;
+
+  let total = 0;
+  let breakdown = '';
+  let descText = '';
+
+  if (years < 1) {
+    // 1년 미만: 1개월 개근 시 1일 (최대 11일)
+    const accrued = Math.min(months, 11);
+    total = accrued;
+    descText = '입사 1년 미만 (월 단위 연차)';
+    breakdown = `
+      <div class="row"><span class="k">근속 기간</span><span class="v">${months}개월 (${totalDays}일)</span></div>
+      <div class="row"><span class="k">발생 연차 (월 1일)</span><span class="v">${accrued}일</span></div>
+      <div class="row"><span class="k">남은 월차 발생 가능</span><span class="v">${11 - accrued}일</span></div>
+    `;
+  } else {
+    // 1년 이상: 기본 15일 + 3년차부터 2년마다 1일 가산 (최대 25일)
+    const annual = Math.min(15 + Math.floor((years - 1) / 2), 25);
+    total = annual;
+    descText = `입사 ${years}년차 연차`;
+    const extra = annual - 15;
+    breakdown = `
+      <div class="row"><span class="k">근속 연수</span><span class="v">만 ${years}년 (${totalDays}일)</span></div>
+      <div class="row"><span class="k">기본 연차</span><span class="v">15일</span></div>
+      <div class="row"><span class="k">가산 연차</span><span class="v">+${extra}일</span></div>
+      ${annual === 25 ? '<div class="row"><span class="k">상한 적용</span><span class="v">최대 25일</span></div>' : ''}
+    `;
+  }
+
+  box.className = 'result show';
+  box.innerHTML = `
+    <div class="headline">
+      <span class="num">${total}</span><span class="unit">일</span>
+      <div class="desc">${descText}</div>
+    </div>
+    <div class="detail">${breakdown}</div>
+    <div class="note">
+      <b>산정 기준</b> · 입사일 기준 방식입니다.<br>
+      • 1년 미만: 1개월 개근 시 1일씩 발생 (최대 11일)<br>
+      • 1년 이상: 기본 15일, 3년 이상 근속 시 2년마다 1일 가산 (최대 25일)<br>
+      ※ 회사 취업규칙이나 회계연도 기준 산정 시 결과가 달라질 수 있습니다.
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
